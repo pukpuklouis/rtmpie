@@ -1,6 +1,6 @@
 FROM ngrie/nginx-rtmp:latest
 
-RUN apk --no-cache add ffmpeg
+RUN apk update && apk --no-cache add ffmpeg
 
 RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings && \
     chown -R nginx:nginx /var/thumbnails && \
