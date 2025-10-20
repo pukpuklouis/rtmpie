@@ -5,7 +5,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create directories for thumbnails and recordings
 RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings && \
-    chown -R www-data:www-data /var/thumbnails /tmp/thumbnail_recordings && \
+    chown -R nginx:nginx /var/thumbnails /tmp/thumbnail_recordings && \
     chmod -R 775 /var/thumbnails /tmp/thumbnail_recordings
 
 # Copy and make executable the thumbnail script
