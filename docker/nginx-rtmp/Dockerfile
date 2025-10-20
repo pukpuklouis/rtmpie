@@ -1,17 +1,19 @@
 FROM alpine:3.19 as builder
 
-ARG NGINX_VERSION=1.24.0
-ARG NGINX_RTMP_VERSION=1.2.7
+ARG NGINX_VERSION=1.26.1
+ARG NGINX_RTMP_VERSION=1.2.2
 
-RUN apk --no-cache add build-base libressl-dev pcre-dev openssl-dev zlib-dev linux-headers automake autoconf && \
-    mkdir -p /tmp/build && \
+RUN apk --no-cache add build-base libressl-dev pcre-dev zlib-dev linux-headers pkgconfig
+
+RUN mkdir -p /tmp/build && \
     cd /tmp/build && \
-    wget --tries=3 --retry-connrefused -q -O nginx.tar.gz https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    wget -q -O nginx.tar.gz http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
     tar -zxf nginx.tar.gz && \
-    wget --tries=3 --retry-connrefused -q -O nginx-rtmp-module.tar.gz https://github.com/winshining/nginx-http-flv-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
+    wget -q -O nginx-rtmp-module.tar.gz https://github.com/winshining/nginx-http-flv-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
     tar -zxf nginx-rtmp-module.tar.gz && \
     cd nginx-${NGINX_VERSION}
 
+RUN cd /tmp/build/nginx-${NGINX_VERSION} && \
     ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/local/sbin/nginx \
