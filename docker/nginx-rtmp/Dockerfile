@@ -6,7 +6,7 @@
 FROM alpine:3.19 AS builder
 
 ARG NGINX_VERSION=1.29.2
-ARG NGINX_RTMP_VERSION=1.2.7
+ARG NGINX_RTMP_VERSION=1.2.2
 ARG NGINX_PREFIX=/opt/nginx
 
 WORKDIR /tmp/build
@@ -27,7 +27,8 @@ RUN curl -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar 
 WORKDIR /tmp/build/nginx-${NGINX_VERSION}
 
 # Configure, build, and install NGINX with the RTMP module
-RUN ./configure \
+RUN MODULE_PATH="/tmp/build/nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
+    ./configure \
         --prefix="${NGINX_PREFIX}" \
         --conf-path="${NGINX_PREFIX}/conf/nginx.conf" \
         --sbin-path="${NGINX_PREFIX}/sbin/nginx" \
@@ -40,7 +41,7 @@ RUN ./configure \
         --with-http_stub_status_module \
         --without-http_rewrite_module \
         --without-http_gzip_module \
-        --add-module="../nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
+        --add-module="${MODULE_PATH}" && \
     make -j"$(nproc)" && \
     make install
 
