@@ -3,17 +3,15 @@ FROM alpine:3.19 as builder
 ARG NGINX_VERSION=1.24.0
 ARG NGINX_RTMP_VERSION=1.2.7
 
-RUN apk --no-cache add build-base libressl-dev pcre-dev zlib-dev
-
-RUN mkdir -p /tmp/build && \
+RUN apk --no-cache add build-base libressl-dev pcre-dev openssl-dev zlib-dev linux-headers automake autoconf && \
+    mkdir -p /tmp/build && \
     cd /tmp/build && \
-    wget -q -O nginx.tar.gz https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    wget --tries=3 --retry-connrefused -q -O nginx.tar.gz https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
     tar -zxf nginx.tar.gz && \
-    wget -q -O nginx-rtmp-module.tar.gz https://github.com/winshining/nginx-http-flv-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
+    wget --tries=3 --retry-connrefused -q -O nginx-rtmp-module.tar.gz https://github.com/winshining/nginx-http-flv-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
     tar -zxf nginx-rtmp-module.tar.gz && \
     cd nginx-${NGINX_VERSION}
 
-RUN cd /tmp/build/nginx-${NGINX_VERSION} && \
     ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/local/sbin/nginx \
@@ -30,7 +28,6 @@ RUN cd /tmp/build/nginx-${NGINX_VERSION} && \
         --with-http_v2_module \
         --add-module=../nginx-http-flv-module-${NGINX_RTMP_VERSION} && \
     make -j $(getconf _NPROCESSORS_ONLN) && \
-    make install && \
     cp objs/nginx /tmp/build/
 
 FROM alpine:3.19
@@ -43,7 +40,10 @@ RUN apk update && \
         libstdc++ \
         ca-certificates \
         ffmpeg \
-        su-exec
+        su-exec \
+        openssl \
+        pcre \
+        zlib
 
 RUN addgroup -S nginx && \
     adduser -s /sbin/nologin -G nginx -S -D -H nginx
