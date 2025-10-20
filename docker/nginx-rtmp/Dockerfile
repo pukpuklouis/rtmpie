@@ -1,4 +1,4 @@
-FROM datarhei/nginx-rtmp:latest
+FROM datarhei/nginx-rtmp:1.15.0-dev-armhf
 
 # Copy custom NGINX config
 COPY nginx.conf /etc/nginx/nginx.conf
