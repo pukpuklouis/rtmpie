@@ -1,7 +1,7 @@
-FROM datarhei/nginx-rtmp:1.15.0-dev-armhf
+FROM datarhei/nginx-rtmp:latest
 
 # Copy custom NGINX config
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 
 # Create directories for thumbnails and recordings
 RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings && \
