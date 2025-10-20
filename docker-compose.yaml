@@ -2,20 +2,20 @@
 # It is not recommended to use this file for running the
 # project in production.
 
-version: '3'
+version: "3"
 
 services:
   database:
     image: mariadb:10.4
     environment:
-      MYSQL_ROOT_PASSWORD: rtmpie
-      MYSQL_DATABASE: rtmpie
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rtmpie}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-rtmpie}
     volumes:
       - database:/var/lib/mysql
     ports: [3306]
 
   rtmp:
-#    image: ngrie/nginx-rtmp
+    #    image: ngrie/nginx-rtmp
     build:
       context: ./docker/nginx-rtmp
     volumes:
@@ -24,14 +24,14 @@ services:
       - 1935:1935
       - 8081:80
 
-###> symfony/mercure-bundle ###
+  ###> symfony/mercure-bundle ###
   mercure:
     image: dunglas/mercure
     restart: unless-stopped
     environment:
-      SERVER_NAME: ':80'
-      MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
-      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: $(openssl rand -hex 32)
+      MERCURE_SUBSCRIBER_JWT_KEY: $(openssl rand -hex 32)
       # Set the URL of your Symfony project (without trailing slash!) as value of the cors_origins directive
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins http://127.0.0.1:8000
@@ -45,7 +45,7 @@ services:
 volumes:
   database:
 
-###> symfony/mercure-bundle ###
+  ###> symfony/mercure-bundle ###
   mercure_data:
   mercure_config:
 ###< symfony/mercure-bundle ###
