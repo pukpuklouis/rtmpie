@@ -26,8 +26,10 @@ RUN curl -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar 
 
 WORKDIR /tmp/build/nginx-${NGINX_VERSION}
 
-# Configure, build, and install NGINX with the RTMP module
+RUN echo "Nginx version: ${NGINX_VERSION}" && echo "RTMP version: ${NGINX_RTMP_VERSION}" && ls -la /tmp/build/
+
 RUN MODULE_PATH="/tmp/build/nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
+    ls -la "${MODULE_PATH}/config" && \
     ./configure \
         --prefix="${NGINX_PREFIX}" \
         --conf-path="${NGINX_PREFIX}/conf/nginx.conf" \
@@ -41,9 +43,11 @@ RUN MODULE_PATH="/tmp/build/nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
         --with-http_stub_status_module \
         --without-http_rewrite_module \
         --without-http_gzip_module \
-        --add-module="${MODULE_PATH}" && \
-    make -j"$(nproc)" && \
-    make install
+        --add-module="${MODULE_PATH}"
+
+RUN make -j"$(nproc)"
+
+RUN make install
 
 ######################################################################
 # Final runtime stage
