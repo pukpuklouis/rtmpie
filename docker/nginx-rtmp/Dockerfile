@@ -1,17 +1,88 @@
-FROM datarhei/nginx-rtmp:latest
+# syntax=docker/dockerfile:1.4
 
-# Copy custom NGINX config
-COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+######################################################################
+# Builder stage
+######################################################################
+FROM alpine:3.19 AS builder
 
-# Create directories for thumbnails and recordings
-RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings && \
-    chmod -R 775 /var/thumbnails /tmp/thumbnail_recordings
+ARG NGINX_VERSION=1.29.2
+ARG NGINX_RTMP_VERSION=1.2.7
+ARG NGINX_PREFIX=/opt/nginx
 
-# Copy and make executable the thumbnail script
+WORKDIR /tmp/build
+
+# Install build dependencies
+RUN apk add --no-cache \
+        build-base \
+        openssl-dev \
+        pcre-dev \
+        zlib-dev \
+        linux-headers \
+        curl
+
+# Download and extract sources
+RUN curl -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar xz && \
+    curl -fsSL "https://github.com/winshining/nginx-http-flv-module/archive/refs/tags/v${NGINX_RTMP_VERSION}.tar.gz" | tar xz
+
+WORKDIR /tmp/build/nginx-${NGINX_VERSION}
+
+# Configure, build, and install NGINX with the RTMP module
+RUN ./configure \
+        --prefix="${NGINX_PREFIX}" \
+        --conf-path="${NGINX_PREFIX}/conf/nginx.conf" \
+        --sbin-path="${NGINX_PREFIX}/sbin/nginx" \
+        --pid-path=/var/run/nginx.pid \
+        --lock-path=/var/lock/nginx.lock \
+        --http-client-body-temp-path=/tmp/nginx/client_body \
+        --http-proxy-temp-path=/tmp/nginx/proxy \
+        --http-fastcgi-temp-path=/tmp/nginx/fastcgi \
+        --with-http_ssl_module \
+        --with-http_stub_status_module \
+        --without-http_rewrite_module \
+        --without-http_gzip_module \
+        --add-module="../nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
+    make -j"$(nproc)" && \
+    make install
+
+######################################################################
+# Final runtime stage
+######################################################################
+FROM alpine:3.19
+
+ARG NGINX_PREFIX=/opt/nginx
+
+# Install runtime dependencies (FFmpeg included)
+RUN apk add --no-cache \
+        ffmpeg \
+        libstdc++ \
+        pcre \
+        openssl \
+        ca-certificates
+
+# Create nginx user and group
+RUN addgroup -S nginx && adduser -S -D -H -G nginx nginx
+
+# Copy built artifacts from builder
+COPY --from=builder "${NGINX_PREFIX}" "${NGINX_PREFIX}"
+
+# Provide default nginx configuration (can be overridden via volume)
+COPY nginx.conf "${NGINX_PREFIX}/conf/nginx.conf"
+
+# Copy helper scripts
 COPY create-thumbnail.sh /usr/local/bin/create-thumbnail.sh
 RUN chmod +x /usr/local/bin/create-thumbnail.sh
 
-# Expose RTMP and HTTP ports
+# Prepare writable directories
+RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx && \
+    chown -R nginx:nginx /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx
+
+# Ensure PATH includes nginx binaries
+ENV PATH="${NGINX_PREFIX}/sbin:${PATH}"
+
 EXPOSE 1935 8080
 
-# Default CMD from base image should be fine
+STOPSIGNAL SIGQUIT
+
+USER nginx
+
+CMD ["nginx", "-g", "daemon off;"]
