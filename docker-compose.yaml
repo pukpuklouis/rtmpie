@@ -20,7 +20,7 @@ services:
     build:
       context: ./docker/nginx-rtmp
     volumes:
-      - ./rtmp_nginx_dev.conf:/usr/local/nginx/conf/nginx.conf
+      - ./rtmp_nginx_dev.conf:/opt/nginx/conf/nginx.conf
     ports:
       - 1935:1935
       - 8081:80
