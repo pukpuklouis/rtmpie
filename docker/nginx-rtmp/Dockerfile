@@ -6,7 +6,7 @@
 FROM alpine:3.19 AS builder
 
 ARG NGINX_VERSION=1.29.2
-ARG NGINX_RTMP_VERSION=1.2.2
+ARG NGINX_RTMP_VERSION=1.2.12
 ARG NGINX_PREFIX=/opt/nginx
 
 WORKDIR /tmp/build
@@ -18,6 +18,8 @@ RUN apk add --no-cache \
         pcre-dev \
         zlib-dev \
         linux-headers \
+        pkgconfig \
+        perl \
         curl
 
 # Download and extract sources
@@ -45,7 +47,7 @@ RUN MODULE_PATH="/tmp/build/nginx-http-flv-module-${NGINX_RTMP_VERSION}" && \
         --without-http_gzip_module \
         --add-module="${MODULE_PATH}"
 
-RUN make -j"$(nproc)"
+RUN make -j"$(nproc)" V=1
 
 RUN make install
 
