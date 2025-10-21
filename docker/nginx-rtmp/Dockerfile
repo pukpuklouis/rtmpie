@@ -80,11 +80,11 @@ COPY create-thumbnail.sh /usr/local/bin/create-thumbnail.sh
 RUN chmod +x /usr/local/bin/create-thumbnail.sh
 
 # Prepare writable directories
-RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx && \
-    chown -R nginx:nginx /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx
+RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx /opt/nginx/logs /opt/nginx/uwsgi_temp /opt/nginx/proxy_temp /opt/nginx/fastcgi_temp /opt/nginx/scgi_temp && \
+    chown -R nginx:nginx /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx /opt/nginx/logs /opt/nginx/uwsgi_temp /opt/nginx/proxy_temp /opt/nginx/fastcgi_temp /opt/nginx/scgi_temp
 
-# Ensure PATH includes nginx binaries
-ENV PATH="${NGINX_PREFIX}/sbin:${PATH}"
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
 
 EXPOSE 1935 8080
 
