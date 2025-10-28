@@ -3,7 +3,7 @@
 ######################################################################
 # Builder stage
 ######################################################################
-FROM alpine:3.19 AS builder
+FROM --platform=$TARGETPLATFORM alpine:3.19 AS builder
 
 ARG NGINX_VERSION=1.29.2
 ARG NGINX_RTMP_VERSION=1.2.12
@@ -54,7 +54,7 @@ RUN make install
 ######################################################################
 # Final runtime stage
 ######################################################################
-FROM alpine:3.19
+FROM --platform=$TARGETPLATFORM alpine:3.19
 
 ARG NGINX_PREFIX=/opt/nginx
 
@@ -83,13 +83,14 @@ RUN chmod +x /usr/local/bin/create-thumbnail.sh
 RUN mkdir -p /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx /opt/nginx/logs /opt/nginx/uwsgi_temp /opt/nginx/proxy_temp /opt/nginx/fastcgi_temp /opt/nginx/scgi_temp && \
     chown -R nginx:nginx /var/thumbnails /tmp/thumbnail_recordings /tmp/nginx /opt/nginx/logs /opt/nginx/uwsgi_temp /opt/nginx/proxy_temp /opt/nginx/fastcgi_temp /opt/nginx/scgi_temp
 
-RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+RUN mkdir -p /var/log/nginx && \
+    ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stderr /var/log/nginx/error.log
 
 EXPOSE 1935 8080
 
 STOPSIGNAL SIGQUIT
 
-USER nginx
+USER root
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/opt/nginx/sbin/nginx", "-g", "daemon off;"]

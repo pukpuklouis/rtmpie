@@ -1,6 +1,8 @@
-caddy:80, {$SERVER_NAME:localhost}
-
-log
+:80, {$SERVER_NAME:localhost} {
+log {
+    output stdout
+    format console
+}
 
 route {
 	root * /var/www/public
@@ -23,4 +25,5 @@ route {
 
 	encode zstd gzip
     file_server
+}
 }
