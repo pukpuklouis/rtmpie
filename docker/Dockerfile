@@ -7,11 +7,24 @@ RUN npm install; \
     npm run build
 
 
-FROM caddy:2-builder AS caddy-builder
+FROM --platform=$BUILDPLATFORM caddy:2-builder AS caddy-builder
 
-RUN xcaddy build \
-    --with github.com/dunglas/mercure \
-    --with github.com/dunglas/mercure/caddy
+ARG TARGETPLATFORM
+
+RUN set -eux; \
+    apk add --no-cache --virtual .xcaddy-build-deps build-base; \
+    case "${TARGETPLATFORM}" in \
+        linux/amd64*) export GOARCH=amd64 ;; \
+        linux/arm64*) export GOARCH=arm64 ;; \
+        linux/arm/v7*) export GOARCH=arm; export GOARM=7 ;; \
+        linux/arm/v6*) export GOARCH=arm; export GOARM=6 ;; \
+        *) echo "Unsupported TARGETPLATFORM: ${TARGETPLATFORM}" >&2; exit 1 ;; \
+    esac; \
+    GOOS=linux GOARCH="${GOARCH}" GOARM="${GOARM:-}" xcaddy build \
+        --output /usr/bin/caddy \
+        --with github.com/dunglas/mercure \
+        --with github.com/dunglas/mercure/caddy; \
+    apk del .xcaddy-build-deps
 
 
 FROM caddy:2 AS rtmpie-caddy
@@ -85,4 +98,3 @@ USER www-data
 
 ENTRYPOINT ["docker-entrypoint"]
 CMD ["php-fpm"]
-
